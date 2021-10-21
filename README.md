@@ -1,14 +1,12 @@
-AppInspect CLI for API 1.0.6 
-Ian Gillespie
-
-[![pipeline status](https://code.hurricanelabs.net/ian/homebrew-appinspect-api-cli-wrapper/badges/master/pipeline.svg)](https://code.hurricanelabs.net/ian/homebrew-appinspect-api-cli-wrapper/-/commits/master) [![coverage report](https://code.hurricanelabs.net/ian/homebrew-appinspect-api-cli-wrapper/badges/master/coverage.svg)](https://code.hurricanelabs.net/ian/homebrew-appinspect-api-cli-wrapper/-/commits/master)[![Quality Gate Status](https://sonarqube.hurricanelabs.net/api/project_badges/measure?project=AppinspectAppCLI&metric=alert_status)](https://sonarqube.hurricanelabs.net/dashboard?id=AppinspectAppCLI)
+AppInspect CLI for API 0.1.6 
+Hurricane Labs (Ian Gillespie)
 
 A little CLI wrapper around the AppInspect API. Always up-to-date. This is an ALPHA version of the app, so bugs are to be expected.
 
-**This has only been tested on Mac OS, so if you decide to try this on another OS and it explodes, I take no responsibility.**
+**This has only been tested on Mac OS, Windows, and Linux**
 
 ## Install With Homebrew (Recommended)
-Run `brew tap ian/homebrew-appinspect-api-cli-wrapper git@code.hurricanelabs.net:ian/homebrew-appinspect-api-cli-wrapper.git && brew install appinspect`
+Run `brew tap <tbd> && brew install appinspect`
 
 Then you should be able to run `appinspect <arguments>` on the CLI. See below for details on all the available options.
 
