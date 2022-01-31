@@ -1,0 +1,112 @@
+name: Rust
+
+on:
+  #push:
+  #  branches: [ main ]
+  #  tags:
+  #    - 'v*'
+  #pull_request:
+  #  branches: [ main ]
+  #  tags:
+  #    - 'v*'
+  release:
+    branches: [ main ]
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+
+  matrix:
+    runs-on: 'ubuntu-latest'
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v2
+      - id: set-matrix
+        run: |
+          TASKS=$(echo $(cat .github/workflows/matrix.json))
+          echo "::set-output name=matrix::${TASKS//'%'/'%25'}"
+
+  cli-build:
+    needs: [matrix]
+    runs-on: ${{ matrix.cfg.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg: ${{ fromJson(needs.matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Dependencies
+        run: ${{ matrix.cfg.dependency-install-command }}
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.cfg.target }}
+          override: true
+      - name: Build binary
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target=${{ matrix.cfg.target }}
+          use-cross: true
+      - name: compress
+        uses: master-atul/tar-action@v1.0.2
+        with:
+          command: c
+          cwd: ${{ matrix.cfg.release-path }}
+          files: |
+            ./${{ matrix.cfg.file-name }}
+          outPath: ${{ matrix.cfg.release-path }}${{ matrix.cfg.compressed-file-name }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.cfg.binary-name }}
+          path: |
+            ${{ matrix.cfg.release-path }}${{ matrix.cfg.compressed-file-name }}
+
+  release:
+    needs: [matrix, cli-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/cli-}
+      - uses: actions/download-artifact@v2
+        with:
+          name: cli-binary-linux
+          path: cli-binary-linux    
+      - uses: actions/download-artifact@v2
+        with:
+          name: cli-binary-windows
+          path: cli-binary-windows
+      - uses: actions/download-artifact@v2
+        with:
+          name: cli-binary-macos
+          path: cli-binary-macos
+      - run: ls -lf cli-binary-linux/
+      - run: ls -lf cli-binary-windows/
+      - run: ls -lf cli-binary-macos/
+      #- name: Create Tag
+      #  id: tag_version
+      #  uses: mathieudutour/github-tag-action@v5.6
+      #  with:
+      #    github_token: ${{ secrets.GITHUB_TOKEN }}
+      - run: |
+          mkdir -p cli-binary-linux/appinspect-${{ steps.tag_version.outputs.new_tag }}-linux-x86_64
+          mv cli-binary-linux/linux-appinspect.tar.gz cli-binary-linux/appinspect-${{ steps.tag_version.outputs.new_tag }}-linux-x86_64/linux-appinspect.tar.gz
+          mkdir -p cli-binary-macos/appinspect-${{ steps.tag_version.outputs.new_tag }}-macos-x86_64
+          mv cli-binary-macos/macos-appinspect.tar.gz cli-binary-macos/appinspect-${{ steps.tag_version.outputs.new_tag }}-macos-x86_64/macos-appinspect.tar.gz
+          mkdir -p cli-binary-windows/appinspect-${{ steps.tag_version.outputs.new_tag }}-windows-x86_64
+          mv cli-binary-windows/windows-appinspect.tar.gz cli-binary-windows/appinspect-${{ steps.tag_version.outputs.new_tag }}-windows-x86_64/windows-appinspect.tar.gz
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          #tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          tag_name: ${{ github.event.release.tag_name }}
+          files: |
+            cli-binary-linux/*/*
+            cli-binary-macos/*/*
+            cli-binary-windows/*/*

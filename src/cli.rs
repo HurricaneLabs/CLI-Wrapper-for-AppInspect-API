@@ -2,7 +2,7 @@ use clap::{App, Arg};
 
 pub fn build_cli() -> App<'static, 'static> {
     App::new("AppInspect CLI for API")
-        .version("0.1.6")
+        .version("0.1.7")
         .author("Hurricane Labs (Ian Gillespie)")
         .about("A little CLI wrapper around the AppInspect API. Always up-to-date.")
         .setting(clap::AppSettings::TrailingVarArg)
@@ -32,9 +32,10 @@ pub fn build_cli() -> App<'static, 'static> {
             .short("t")
             .long("included_tags")
             .required(false)
-            .help("See https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference for a full list of available tags.")
+            .help("Multiple tags allowed i.e. -t foo -t bar etc. All tags provided here https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference/ can now be passed in as options i.e. -t jquery -t cloud.")
             .takes_value(true)
             .multiple(true)
+            .number_of_values(1)
         )
         .arg(Arg::with_name("generate_file")
             .long("generate_file")

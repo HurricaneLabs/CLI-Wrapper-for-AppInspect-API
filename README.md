@@ -1,16 +1,10 @@
-AppInspect CLI for API 0.1.6 
+AppInspect CLI for API 0.1.7
 Hurricane Labs (Ian Gillespie)
 
-A little CLI wrapper around the AppInspect API. Always up-to-date. This is an ALPHA version of the app, so bugs are to be expected.
+A little CLI wrapper around the AppInspect API. Always up-to-date.
 
-**This has only been tested on Mac OS, Windows, and Linux**
-
-## Install With Homebrew (Recommended)
-Run `brew tap <tbd> && brew install appinspect`
-
-Then you should be able to run `appinspect <arguments>` on the CLI. See below for details on all the available options.
-
-If for some reason you encounter a problem installing you can try to updating, upgrading, and clearing Homebrew cache by running `brew update && brew upgrade && brew cleanup`.
+## Install With Homebrew
+Coming soon...
 
 ## The Manual Install Option
 **All you need to download is: target/release/appinspect**
@@ -50,9 +44,9 @@ OPTIONS:
     -h, --html <true|false>
             By default this will generat an HTML file. If set to false then the report will be generated as JSON. Only
             applicable is 'generate_file' flag is set to true.
-    -t, --included_tags <[opt1 opt2 ...]>
-            All tags provided here https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference/ can now be passed in as options i.e. 
-            -t jquery cloud
+    -t, --included_tags <[opt1]>
+            Multiple tags allowed i.e. -t cloud -t jquey etc. All available tags provided here 
+			https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference/ can now be passed in as options i.e. -t jquery -t cloud
     -p, --password <SPLUNK_PASSWORD>
             Provide your splunk.com / SplunkAnswers / Splunkbase password. Can also be set as an env var
             SPLUNK_PASSWORD.
@@ -70,8 +64,8 @@ OPTIONS:
 Optionally, if you store your SPLUNK_PASSWORD, SPLUNK_USERNAME, and REPORT_PATH as env vars then you can bypass those arguments.
 
 # Updates
-v 0.1.6
-- All tags provided here https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference/ can now be passed in as options when using the --tags (-t) option. Split multiple options by a space i.e. -t jquery cloud 
+v 0.1.7
+- Bug fix for multiple tags provided before additional flags, which would prevent any flags passed in afterward to be bypassed. Multiple flags are now to be provided using -t <value_1> -t <value_2> so on and so forth.
 
 Roadmap (to-do):
 - Integrate tests
