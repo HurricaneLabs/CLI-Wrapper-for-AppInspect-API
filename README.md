@@ -4,7 +4,8 @@ Hurricane Labs (Ian Gillespie)
 A little CLI wrapper around the AppInspect API. Always up-to-date.
 
 ## Install With Homebrew
-Coming soon...
+`brew tap hurricanelabs/CLI-Wrapper-for-AppInspect-API`
+`brew install CLI-Wrapper-for-AppInspect-API`
 
 ## The Manual Install Option
 **All you need to download is: target/release/appinspect**
