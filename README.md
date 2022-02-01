@@ -1,4 +1,4 @@
-AppInspect CLI for API 0.1.8
+AppInspect CLI for API 0.1.9
 Hurricane Labs
 
 A little CLI wrapper around the AppInspect API. Always up-to-date.
@@ -69,6 +69,9 @@ OPTIONS:
 Optionally, if you store your SPLUNK_PASSWORD, SPLUNK_USERNAME, and REPORT_PATH as env vars then you can bypass those arguments.
 
 # Updates
+v 0.1.9
+- Handle edge case where password contains a character such as a newline
+
 v 0.1.8
 - Tags are now required. Previously, not providing tags would end up with an unexpected panic.
 

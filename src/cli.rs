@@ -2,8 +2,8 @@ use clap::{App, Arg};
 
 pub fn build_cli() -> App<'static, 'static> {
     App::new("AppInspect CLI for API")
-        .version("0.1.8")
-        .author("Hurricane Labs (Ian Gillespie)")
+        .version("0.1.9")
+        .author("Hurricane Labs")
         .about("A little CLI wrapper around the AppInspect API. Always up-to-date.")
         .setting(clap::AppSettings::TrailingVarArg)
         .setting(clap::AppSettings::AllowLeadingHyphen)

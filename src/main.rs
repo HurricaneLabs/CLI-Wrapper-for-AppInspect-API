@@ -460,7 +460,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
 
-        let token: String = serde_json::from_str(&token_str).unwrap();
+        let token: String = match serde_json::from_str(&token_str) {
+            Ok(val) => {val},
+            Err(_) => {
+                let error = String::from("The AppInspect API may have had trouble parsing your password. Check that it doesn't contain invalid characters such as a newline.");
+                return Err(
+                    error.into()
+                )
+            }
+        };
 
         let submit_app_response: Result<String, Box<dyn std::error::Error>> = submit_app(&token, &file, &included_tags);
         
