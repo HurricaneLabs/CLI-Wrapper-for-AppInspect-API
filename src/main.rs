@@ -423,7 +423,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     )
                 }
             }
-        }
+        } else {
+        	let error = format!(r#"You must provide at least one tag i.e. -t cloud"#);
+            return Err(
+                error.replace("\"", "'").replace('\'', "").into()
+            )
+		}
 
         let included_tags = included_tags_vec.join(",");
 

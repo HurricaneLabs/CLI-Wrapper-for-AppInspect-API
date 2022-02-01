@@ -2,7 +2,7 @@ use clap::{App, Arg};
 
 pub fn build_cli() -> App<'static, 'static> {
     App::new("AppInspect CLI for API")
-        .version("0.1.7")
+        .version("0.1.8")
         .author("Hurricane Labs (Ian Gillespie)")
         .about("A little CLI wrapper around the AppInspect API. Always up-to-date.")
         .setting(clap::AppSettings::TrailingVarArg)
@@ -31,7 +31,7 @@ pub fn build_cli() -> App<'static, 'static> {
         .arg(Arg::with_name("included_tags")
             .short("t")
             .long("included_tags")
-            .required(false)
+            .required(true)
             .help("Multiple tags allowed i.e. -t foo -t bar etc. All tags provided here https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference/ can now be passed in as options i.e. -t jquery -t cloud.")
             .takes_value(true)
             .multiple(true)
@@ -57,7 +57,7 @@ pub fn build_cli() -> App<'static, 'static> {
             .long("report_path")
             .required(false)
             .value_name("/full/path/to/report/output/")
-            .help("Set the full path to where you want the reports to be output. By default this is in the same directory in which appinspect is installed. Can also be set as an env variable REPORT_PATH.")
+            .help("Set the full path to where you want the reports to be output. By default this is in the same directory in which appinspect is installed. Can also be set as an env variable REPORT_PATH. IMPORTANT: You must set the generate_file flag to true in order for this to output the report.")
             .takes_value(true)
         )
         .arg(Arg::with_name("timeout")

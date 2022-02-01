@@ -1,5 +1,5 @@
-AppInspect CLI for API 0.1.7
-Hurricane Labs (Ian Gillespie)
+AppInspect CLI for API 0.1.8
+Hurricane Labs
 
 A little CLI wrapper around the AppInspect API. Always up-to-date.
 
@@ -43,19 +43,21 @@ FLAGS:
 OPTIONS:
     -f, --file <SPLUNK_APP.TAR.GZ | SPLUNK_APP.SPL> Provide the path to compressed Splunk app you want to upload.
         --generate_file <true|false>
-            If set to true, this will generate a file. By default this is false and will output the results to the CLI.
+            If set to true, this will generate a file. By default this is false and will output html to the CLI.
     -h, --html <true|false>
             By default this will generat an HTML file. If set to false then the report will be generated as JSON. Only
             applicable is 'generate_file' flag is set to true.
-    -t, --included_tags <[opt1]>
-            Multiple tags allowed i.e. -t cloud -t jquey etc. All available tags provided here 
-			https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference/ can now be passed in as options i.e. -t jquery -t cloud
+    -t, --included_tags <included_tags>...
+            Multiple tags allowed i.e. -t foo -t bar etc. All tags provided here
+            https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference/ can now be passed in as
+            options i.e. -t jquery -t cloud.
     -p, --password <SPLUNK_PASSWORD>
             Provide your splunk.com / SplunkAnswers / Splunkbase password. Can also be set as an env var
             SPLUNK_PASSWORD.
     -r, --report_path </full/path/to/report/output/>
             Set the full path to where you want the reports to be output. By default this is in the same directory in
-            which appinspect is installed. Can also be set as an env variable REPORT_PATH.
+            which appinspect is installed. Can also be set as an env variable REPORT_PATH. IMPORTANT: You must set the
+            generate_file flag to true in order for this to output the report.
         --timeout <SPLUNK_REPORT_TIMEOUT>
             By default, the report request will timeout after 300 seconds. You can override this by submitting a time in
             seconds. You can alternatively set an env var SPLUNK_REPORT_TIMEOUT.
@@ -67,6 +69,9 @@ OPTIONS:
 Optionally, if you store your SPLUNK_PASSWORD, SPLUNK_USERNAME, and REPORT_PATH as env vars then you can bypass those arguments.
 
 # Updates
+v 0.1.8
+- Tags are now required. Previously, not providing tags would end up with an unexpected panic.
+
 v 0.1.7
 - Bug fix for multiple tags provided before additional flags, which would prevent any flags passed in afterward to be bypassed. Multiple flags are now to be provided using -t <value_1> -t <value_2> so on and so forth.
 
