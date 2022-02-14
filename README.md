@@ -72,6 +72,9 @@ OPTIONS:
 
 Optionally, if you store your SPLUNK_PASSWORD, SPLUNK_USERNAME, and REPORT_PATH as env vars then you can bypass those arguments.
 
+# Run Example
+    appinspect -f /path/to/app.tar.gz -t cloud
+
 # Updates
 v 0.1.9
 - Handle edge case where password contains a character such as a newline
