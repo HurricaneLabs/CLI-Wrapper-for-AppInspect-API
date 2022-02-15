@@ -35,6 +35,9 @@ export SPLUNK_REPORT_TIMEOUT=<int_value>
 ## Additional Notes
 Currently, the CLI color output does not work in a Windows environment.
 
+If you get a message about a missing DLL on Windows, you will need to install the Visual Studio redistributable 
+package found here: https://www.microsoft.com/en-us/download/details.aspx?id=52685
+
 ## Options
 ```
 USAGE:
