@@ -6,7 +6,7 @@ use std::io::Write;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::{thread, time};
-use reqwest;
+
 use reqwest::header::{HeaderMap, CACHE_CONTROL, CONTENT_TYPE};
 use std::error::Error;
 use std::fmt;
@@ -39,7 +39,7 @@ fn get_auth_token(username: &str, password: &str) -> Result<String, Box<dyn std:
     let json_response: serde_json::Value = res;
 
     // Check status
-    if json_response["status_code"].to_string() == "401" {
+    if json_response["status_code"] == "401" {
         return Err(
             "Unauthorized! Please check your credentials before attempting to authenticate again.".into()
         )
@@ -59,7 +59,7 @@ fn submit_app(token: &str, file_path: &str, included_tags: &str) -> Result<Strin
     let client = reqwest::blocking::Client::new();
 
     let mut form = reqwest::blocking::multipart::Form::new();
-    let included_tags_vec = included_tags.split(",").collect::<Vec<&str>>();
+    let included_tags_vec = included_tags.split(',').collect::<Vec<&str>>();
 
     form = form.text("mode", "precert".to_string());
 
@@ -80,12 +80,10 @@ fn submit_app(token: &str, file_path: &str, included_tags: &str) -> Result<Strin
     let res: serde_json::Value = request_build;
 
     if res["message"] == "File type not allowed.  Files must be [\'gz\', \'tgz\', \'zip\', \'spl\', \'tar\']" {
-        return Err(Box::new(CustomError(res["message"].to_string().into())))
+        return Err(Box::new(CustomError(res["message"].to_string())))
     }
     
-    let response_id = serde_json::to_string(&res["request_id"]).or_else(|err| 
-        Err(Box::new(err) as Box<dyn std::error::Error>)
-    );
+    let response_id = serde_json::to_string(&res["request_id"]).map_err(|err| Box::new(err) as Box<dyn std::error::Error>);
 
     Ok(response_id.unwrap_or("0".to_string()))
 
@@ -95,7 +93,7 @@ fn get_submission_status(token: &str, request_id: &str) -> Result<String, Box<dy
 
     let mut url = "https://appinspect.splunk.com/v1/app/validate/status/".to_string();
 
-    url.push_str(&request_id);
+    url.push_str(request_id);
 
     let client = reqwest::blocking::Client::new();
     let request_build = client
@@ -112,7 +110,7 @@ fn get_submission_status(token: &str, request_id: &str) -> Result<String, Box<dy
 pub fn get_report_results(token: &str, request_id: &str, html: &str, generate_file: &str) -> Result<String, Box<dyn std::error::Error>> {
 
     let mut url = "https://appinspect.splunk.com/v1/app/report/".to_string();
-    url.push_str(&request_id);
+    url.push_str(request_id);
 
     let mut headers_map = HeaderMap::new();
 
@@ -130,7 +128,7 @@ pub fn get_report_results(token: &str, request_id: &str, html: &str, generate_fi
 
     if html == "true" || generate_file == "false" {
         let html_request = request_build.text()?;
-        let res: String = String::from(html_request);
+        let res: String = html_request;
         Ok(res)
     } else {
         let json_request = request_build.json()?;
@@ -159,7 +157,7 @@ pub fn create_report_file(report_data: String, file: &str, html: &str, report_pa
         let mut file = File::create(path)?;
 
         for line in report_data.lines() {
-            let current_line = line.to_string().replace("\n", "");
+            let current_line = line.to_string().replace('\n', "");
             file.write(current_line.as_bytes()).expect("Unable to write data to report.");
         }
 
@@ -267,7 +265,7 @@ pub fn output_report_to_cli(report_data: String) {
                 write_color(line, Color::Rgb(240,135,22)).expect("Could not apply rgb color.");
                 current_color = "orange";
             }
-            else if line.trim().len() != 0 {
+            else if !line.trim().is_empty() {
                 print!("{}", line);
                 current_color = "";
             }
@@ -288,7 +286,7 @@ pub fn check_status(
     timeout_time: i32
 ) -> Result<(), Box<dyn std::error::Error>> {
 
-    let mut status: String = serde_json::from_str(&status_request.unwrap().to_string()).unwrap_or_else(|e| {
+    let mut status: String = serde_json::from_str(&status_request.unwrap()).unwrap_or_else(|e| {
         println!("Error obtaining report status. Reason {:?}", e);  
         ::std::process::exit(1);
     });
@@ -320,18 +318,18 @@ pub fn check_status(
 
     if status == "SUCCESS" {
         let report_results_response: Result<String, Box<dyn std::error::Error>> = 
-            get_report_results(&token, &request_id, &html, &generate_file);
+            get_report_results(&token, &request_id, html, generate_file);
 
         match report_results_response {
             Ok(result) => {
                 if generate_file == "true" {
-                    let report = create_report_file(result, &file, &html, &report_path);
+                    let report = create_report_file(result, file, html, report_path);
                     match report {
                         Ok(_) => println!("Your report has been created in the following location: {:?}", report_path),
                         Err(err) => { 
                             let error = format!(r#"Could not generate your report. Reason: {:?}"#, err);
                             return Err(
-                                error.replace("\"", "'").replace('\'', "").into()
+                                error.replace('\"', "'").replace('\'', "").into()
                             )
                         }
                     }
@@ -343,7 +341,7 @@ pub fn check_status(
             Err(result) => { 
                 let error = format!(r#"Could not obtain report results. Reasson: {:?}"#, result.to_string());
                 return Err(
-                    error.replace("\"", "'").replace('\'', "").into()
+                    error.replace('\"', "'").replace('\'', "").into()
                 )
             }
         }
@@ -365,12 +363,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Ok(password_env) = env::var("SPLUNK_PASSWORD") {
         env_splunk_pwd_exists = true;
-        password = password_env.to_string();
+        password = password_env;
     };
 
     if let Ok(username_env) = env::var("SPLUNK_USERNAME") {
         env_splunk_username_exists = true;
-        username = username_env.to_string();
+        username = username_env;
     }
 
     if let Ok(timeout_env) = env::var("SPLUNK_REPORT_TIMEOUT") {
@@ -400,7 +398,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if generate_file != "true" && generate_file != "false" {
             let error = format!(r#"The generate_file flag must be 'true' or 'false', not {:?}"#, generate_file);
             return Err(
-                error.replace("\"", "'").replace('\'', "").into()
+                error.replace('\"', "'").replace('\'', "").into()
             )
         }
 
@@ -419,14 +417,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if !existing_tags.contains(&provided_tag.to_string()) {
                     let error = format!(r#"{:?} is not a known tag."#, provided_tag);
                     return Err(
-                        error.replace("\"", "'").replace('\'', "").into()
+                        error.replace('\"', "'").replace('\'', "").into()
                     )
                 }
             }
         } else {
-        	let error = format!(r#"You must provide at least one tag i.e. -t cloud"#);
+        	let error = r#"You must provide at least one tag i.e. -t cloud"#.to_string();
             return Err(
-                error.replace("\"", "'").replace('\'', "").into()
+                error.replace('\"', "'").replace('\'', "").into()
             )
 		}
 
@@ -435,16 +433,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let html = matches.value_of("html").unwrap_or("true");
 
         if let Ok(report_path_env) = env::var("REPORT_PATH") {
-            report_path = report_path_env.to_string();
+            report_path = report_path_env;
         } else {
             report_path = matches.value_of("report_path").unwrap_or("./").to_string();
         }
 
-        if file.starts_with("~") {
+        if file.starts_with('~') {
             file.replace_range(0..1, dirs::home_dir().unwrap().to_str().unwrap());
         }
 
-        if report_path.starts_with("~") {
+        if report_path.starts_with('~') {
             report_path.replace_range(0..1, dirs::home_dir().unwrap().to_str().unwrap());
         }
         
@@ -455,7 +453,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(err) => { 
                 let error = format!(r#"Could not obtain auth_token. Reason: {:?}"#, err);
                 return Err(
-                    error.replace("\"", "'").replace('\'', "").into()
+                    error.replace('\"', "'").replace('\'', "").into()
                 )
             }
         };
@@ -476,7 +474,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let error = format!(r#"Error: {:?}"#, &request_id_str.to_string());
             return Err(
-                error.replace("\"", "'").replace('\'', "").into()
+                error.replace('\"', "'").replace('\'', "").into()
             )
         }
 
@@ -485,7 +483,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(err) => { 
                 let error = format!(r#"Could not obtain the request_id: {:?}"#, err);
                 return Err(
-                    error.replace("\"", "'").replace('\'', "").into()
+                    error.replace('\"', "'").replace('\'', "").into()
                 )
             }
         };
