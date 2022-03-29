@@ -1,15 +1,9 @@
 name: Rust
 
 on:
-  #push:
-  #  branches: [ main ]
-  #  tags:
-  #    - 'v*'
-  #pull_request:
-  #  branches: [ main ]
-  #  tags:
-  #    - 'v*'
   release:
+    permissions:
+      contents: write  # for softprops/action-gh-release to create GitHub release
     branches: [ main ]
     tags:
       - 'v*'
@@ -24,12 +18,21 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v2
+      - name: Harden Runner
+        uses: step-security/harden-runner@9b0655f430fba8c7001d4e38f8d4306db5c6e0ab # v1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - name: Harden Runner
+        uses: step-security/harden-runner@9b0655f430fba8c7001d4e38f8d4306db5c6e0ab # v1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
       - id: set-matrix
         run: |
           TASKS=$(echo $(cat .github/workflows/matrix.json))
           echo "::set-output name=matrix::${TASKS//'%'/'%25'}"
-
   cli-build:
     needs: [matrix]
     runs-on: ${{ matrix.cfg.os }}
@@ -38,35 +41,39 @@ jobs:
       matrix:
         cfg: ${{ fromJson(needs.matrix.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v1
+      - name: Harden Runner
+        uses: step-security/harden-runner@9b0655f430fba8c7001d4e38f8d4306db5c6e0ab # v1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - uses: actions/checkout@544eadc6bf3d226fd7a7a9f0dc5b5bf7ca0675b9 # v1
       - name: Install Dependencies
         run: ${{ matrix.cfg.dependency-install-command }}
-      - uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
           toolchain: stable
           target: ${{ matrix.cfg.target }}
           override: true
       - name: Build binary
-        uses: actions-rs/cargo@v1
+        uses: actions-rs/cargo@e7f754b8e09f70ad8eb2c5aebf61e58e8403b210 # v1
         with:
           command: build
           args: --release --target=${{ matrix.cfg.target }}
           use-cross: true
       - name: compress
-        uses: master-atul/tar-action@v1.0.2
+        uses: master-atul/tar-action@adb4b8023b47be269c0203b4dd80257483821499 # v1.0.2
         with:
           command: c
           cwd: ${{ matrix.cfg.release-path }}
           files: |
             ./${{ matrix.cfg.file-name }}
           outPath: ${{ matrix.cfg.release-path }}${{ matrix.cfg.compressed-file-name }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2
         with:
           name: ${{ matrix.cfg.binary-name }}
           path: |
             ${{ matrix.cfg.release-path }}${{ matrix.cfg.compressed-file-name }}
-
   release:
     needs: [matrix, cli-build]
     runs-on: ubuntu-latest
@@ -74,15 +81,15 @@ jobs:
       - name: Get the version
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/cli-}
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
         with:
           name: cli-binary-linux
           path: cli-binary-linux    
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
         with:
           name: cli-binary-windows
           path: cli-binary-windows
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
         with:
           name: cli-binary-macos
           path: cli-binary-macos
@@ -102,7 +109,7 @@ jobs:
           mkdir -p cli-binary-windows/appinspect-${{ steps.tag_version.outputs.new_tag }}-windows-x86_64
           mv cli-binary-windows/windows-appinspect.tar.gz cli-binary-windows/appinspect-${{ steps.tag_version.outputs.new_tag }}-windows-x86_64/windows-appinspect.tar.gz
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@4716bde57e0fcda6ce83002e2469b8a90e560573 # v1
         with:
           #tag_name: ${{ steps.tag_version.outputs.new_tag }}
           tag_name: ${{ github.event.release.tag_name }}
