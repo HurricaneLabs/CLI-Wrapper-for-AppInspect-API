@@ -29,18 +29,14 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: rust
+      # Need a rust analyzer here, but haven't found one
 
       - uses: actions/checkout@v3
       - id: set-matrix
         run: |
           TASKS=$(echo $(cat .github/workflows/matrix.json))
           echo "::set-output name=matrix::${TASKS//'%'/'%25'}"
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+
   cli-build:
     needs: [matrix]
     runs-on: ${{ matrix.cfg.os }}
