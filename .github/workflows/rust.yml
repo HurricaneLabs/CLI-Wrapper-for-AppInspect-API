@@ -4,7 +4,7 @@ on:
   release:
     permissions:
       contents: write  # for softprops/action-gh-release to create GitHub release
-    branches: [ main ]
+    branches: [ main, dev ]
     tags:
       - 'v*'
 permissions: read-all
@@ -104,11 +104,6 @@ jobs:
       - run: ls -lf cli-binary-linux/
       - run: ls -lf cli-binary-windows/
       - run: ls -lf cli-binary-macos/
-      #- name: Create Tag
-      #  id: tag_version
-      #  uses: mathieudutour/github-tag-action@v5.6
-      #  with:
-      #    github_token: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           mkdir -p cli-binary-linux/appinspect-${{ steps.tag_version.outputs.new_tag }}-linux-x86_64
           mv cli-binary-linux/linux-appinspect.tar.gz cli-binary-linux/appinspect-${{ steps.tag_version.outputs.new_tag }}-linux-x86_64/linux-appinspect.tar.gz
