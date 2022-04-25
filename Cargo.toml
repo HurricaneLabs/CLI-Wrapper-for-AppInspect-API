@@ -12,7 +12,7 @@ clap = "3.1.12"
 
 [dependencies]
 reqwest = { version = "0.11.10", features = ["json", "blocking"] }
-tokio = { version = "0.2", features = ["full"] }
+tokio = { version = "1.17", features = ["full"] }
 serde = { version = "1.0.55", features = ["derive"] }
 openssl = { version = "0.10", features = ["vendored"] }
 serde_json = "1.0.55"
