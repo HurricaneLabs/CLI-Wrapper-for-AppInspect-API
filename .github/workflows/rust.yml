@@ -79,21 +79,22 @@ jobs:
           path: |
             ${{ matrix.cfg.release-path }}${{ matrix.cfg.compressed-file-name }}
   release:
+    permissions: write-all
     needs: [matrix, cli-build]
     runs-on: ubuntu-latest
     steps:
       - name: Get the version
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/cli-}
-      - uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
+      - uses: actions/download-artifact@v3
         with:
           name: cli-binary-linux
           path: cli-binary-linux    
-      - uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
+      - uses: actions/download-artifact@v3
         with:
           name: cli-binary-windows
           path: cli-binary-windows
-      - uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
+      - uses: actions/download-artifact@v3
         with:
           name: cli-binary-macos
           path: cli-binary-macos
@@ -108,9 +109,8 @@ jobs:
           mkdir -p cli-binary-windows/appinspect-${{ steps.tag_version.outputs.new_tag }}-windows-x86_64
           mv cli-binary-windows/windows-appinspect.tar.gz cli-binary-windows/appinspect-${{ steps.tag_version.outputs.new_tag }}-windows-x86_64/windows-appinspect.tar.gz
       - name: Release
-        uses: softprops/action-gh-release@4716bde57e0fcda6ce83002e2469b8a90e560573 # v1
+        uses: softprops/action-gh-release@v1 # v1
         with:
-          #tag_name: ${{ steps.tag_version.outputs.new_tag }}
           tag_name: ${{ github.event.release.tag_name }}
           files: |
             cli-binary-linux/*/*
