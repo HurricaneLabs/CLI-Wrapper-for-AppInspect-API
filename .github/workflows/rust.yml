@@ -4,7 +4,13 @@ on:
   release:
     permissions:
       contents: write  # for softprops/action-gh-release to create GitHub release
-    branches: [ main, dev ]
+    branches: [ main ]
+    tags:
+      - 'v*'
+  push:
+    permissions:
+      contents: write  # for softprops/action-gh-release to create GitHub release
+    branches: [ dev ]
     tags:
       - 'v*'
 permissions: read-all
