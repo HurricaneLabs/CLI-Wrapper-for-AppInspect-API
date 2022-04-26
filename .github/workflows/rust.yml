@@ -7,40 +7,36 @@ on:
     branches: [ main ]
     tags:
       - 'v*'
+  push:
+    permissions:
+      contents: write  # for softprops/action-gh-release to create GitHub release
+    branches: [ dev ]
+    tags:
+      - 'v*'
 permissions: read-all
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-
   matrix:
+    permissions: write-all
     runs-on: 'ubuntu-latest'
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@9b0655f430fba8c7001d4e38f8d4306db5c6e0ab # v1
+      - uses: step-security/harden-runner@34cbc43f0b10c9dda284e663cf43c2ebaf83e956
         with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+          egress-policy: audit
 
-      - name: Harden Runner
-        uses: step-security/harden-runner@9b0655f430fba8c7001d4e38f8d4306db5c6e0ab # v1
-        with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      # Need a rust analyzer here, but haven't found one
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
-        with:
-          languages: rust
-
-      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+      - uses: actions/checkout@v3
       - id: set-matrix
         run: |
           TASKS=$(echo $(cat .github/workflows/matrix.json))
           echo "::set-output name=matrix::${TASKS//'%'/'%25'}"
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+
   cli-build:
     needs: [matrix]
     runs-on: ${{ matrix.cfg.os }}
@@ -104,11 +100,6 @@ jobs:
       - run: ls -lf cli-binary-linux/
       - run: ls -lf cli-binary-windows/
       - run: ls -lf cli-binary-macos/
-      #- name: Create Tag
-      #  id: tag_version
-      #  uses: mathieudutour/github-tag-action@v5.6
-      #  with:
-      #    github_token: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           mkdir -p cli-binary-linux/appinspect-${{ steps.tag_version.outputs.new_tag }}-linux-x86_64
           mv cli-binary-linux/linux-appinspect.tar.gz cli-binary-linux/appinspect-${{ steps.tag_version.outputs.new_tag }}-linux-x86_64/linux-appinspect.tar.gz

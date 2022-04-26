@@ -1,4 +1,4 @@
-AppInspect CLI for API 0.1.9
+AppInspect CLI for API 0.2.0
 Hurricane Labs
 
 A little CLI wrapper around the AppInspect API. Always up-to-date.
@@ -79,6 +79,9 @@ Optionally, if you store your SPLUNK_PASSWORD, SPLUNK_USERNAME, and REPORT_PATH 
     appinspect -f /path/to/app.tar.gz -t cloud
 
 # Updates
+v 0.2.0
+- Dependency updates
+
 v 0.1.9
 - Handle edge case where password contains a character such as a newline
 
