@@ -10,9 +10,9 @@ on:
   push:
     permissions:
       contents: write  # for softprops/action-gh-release to create GitHub release
-    branches: [ dev ]
+    branches: [ development ]
     tags:
-      - 'v*'
+      - 'v*-beta'
 permissions: read-all
 
 env:
