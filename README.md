@@ -1,4 +1,4 @@
-AppInspect CLI for API 0.2.0
+AppInspect CLI for API 0.2.1
 Hurricane Labs
 
 A little CLI wrapper around the AppInspect API. Always up-to-date.
@@ -24,7 +24,7 @@ export PATH="$PATH:/usr/local/bin/appinspect"
 ```
 
 ## Set ENV Variables
-Optionally, you can set appropriate environment variables in ~/.bash_profile etc. 
+Optionally, you can set appropriate environment variables in ~/.bash_profile etc.
 ```
 export SPLUNK_USERNAME="<your_splunkbase_username>"
 export SPLUNK_PASSWORD="<your_splunkbase_password>"
@@ -35,7 +35,7 @@ export SPLUNK_REPORT_TIMEOUT=<int_value>
 ## Additional Notes
 Currently, the CLI color output does not work in a Windows environment.
 
-If you get a message about a missing DLL on Windows, you will need to install the Visual Studio redistributable 
+If you get a message about a missing DLL on Windows, you will need to install the Visual Studio redistributable
 package found here: https://www.microsoft.com/en-us/download/details.aspx?id=52685
 
 ## Options
@@ -55,9 +55,9 @@ OPTIONS:
             By default this will generat an HTML file. If set to false then the report will be generated as JSON. Only
             applicable is 'generate_file' flag is set to true.
     -t, --included_tags <included_tags>...
-            Multiple tags allowed i.e. -t foo -t bar etc. All tags provided here
+            Multiple tags allowed i.e. -t=foo,bar etc. All tags provided here
             https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference/ can now be passed in as
-            options i.e. -t jquery -t cloud.
+            options i.e. -t=cloud,jquery.
     -p, --password <SPLUNK_PASSWORD>
             Provide your splunk.com / SplunkAnswers / Splunkbase password. Can also be set as an env var
             SPLUNK_PASSWORD.
@@ -79,6 +79,12 @@ Optionally, if you store your SPLUNK_PASSWORD, SPLUNK_USERNAME, and REPORT_PATH 
     appinspect -f /path/to/app.tar.gz -t cloud
 
 # Updates
+v 0.2.1
+- Clap updated to v4.0.18
+    - Note: Tags must be provided as a comma delimited list:
+         `-t=<tag1>,<tagN>`
+- Reqwest update to v0.11
+
 v 0.2.0
 - Dependency updates
 

@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use std::{thread, time};
 
 use reqwest::header::{HeaderMap, CACHE_CONTROL, CONTENT_TYPE};
+use reqwest::blocking::multipart;
 use std::error::Error;
 use std::fmt;
 use std::env;
@@ -58,7 +59,7 @@ fn submit_app(token: &str, file_path: &str, included_tags: &str) -> Result<Strin
 
     let client = reqwest::blocking::Client::new();
 
-    let mut form = reqwest::blocking::multipart::Form::new();
+    let mut form = multipart::Form::new();
     let included_tags_vec = included_tags.split(',').collect::<Vec<&str>>();
 
     form = form.text("mode", "precert".to_string());
@@ -72,9 +73,9 @@ fn submit_app(token: &str, file_path: &str, included_tags: &str) -> Result<Strin
     let request_build = client
         .post("https://appinspect.splunk.com/v1/app/validate")
         .multipart(final_form)
-        .headers(headers_map)   
+        .headers(headers_map)
         .bearer_auth(token)
-        .send()?.json()?;   
+        .send()?.json()?;
 
     // Converts the Future type to a Result<Response, Error>
     let res: serde_json::Value = request_build;
@@ -82,7 +83,7 @@ fn submit_app(token: &str, file_path: &str, included_tags: &str) -> Result<Strin
     if res["message"] == "File type not allowed.  Files must be [\'gz\', \'tgz\', \'zip\', \'spl\', \'tar\']" {
         return Err(Box::new(CustomError(res["message"].to_string())))
     }
-    
+
     let response_id = serde_json::to_string(&res["request_id"]).map_err(|err| Box::new(err) as Box<dyn std::error::Error>);
 
     Ok(response_id.unwrap_or("0".to_string()))
@@ -147,11 +148,11 @@ pub fn create_report_file(report_data: String, file: &str, html: &str, report_pa
     let mut file_stem = match file.file_stem() {
         Some(stem) => OsString::from(stem),
         None =>  OsString::from("_")
-    }; 
+    };
 
     path.push(report_path);
 
-    if html == "true" { 
+    if html == "true" {
         file_stem.push(".html");
         path.push(file_stem);
         let mut file = File::create(path)?;
@@ -201,7 +202,7 @@ pub fn output_report_to_cli(report_data: String) {
         if current_line.trim().starts_with("<h1>") {
             begin_printing = true;
         }
-        
+
         if (!current_line.is_empty() || current_line != "\n") && begin_printing {
             let line = from_read(current_line.as_bytes(), 1000);
 
@@ -236,7 +237,7 @@ pub fn output_report_to_cli(report_data: String) {
             else if line.contains("Successes") {
                 write_color(line, Color::Rgb(4,233,32)).expect("Could not apply rgb color.");
                 current_color = "green";
-            } 
+            }
             else if line.contains("[ success ]") || current_color == "green" {
                 write_color(line, Color::Rgb(4,233,32)).expect("Could not apply rgb color.");
                 current_color = "green"
@@ -248,7 +249,7 @@ pub fn output_report_to_cli(report_data: String) {
             else if line.contains("[ not_applicable ]") || current_color == "gray" {
                 write_color(line, Color::Rgb(230,235,233)).expect("Could not apply rgb color.");
                 current_color = "gray";
-            } 
+            }
             else if line.contains("[ manual_check ]") || current_color == "blue" {
                 write_color(line, Color::Blue).expect("Could not apply blue.");
                 current_color = "blue";
@@ -277,17 +278,17 @@ pub fn output_report_to_cli(report_data: String) {
 
 pub fn check_status(
     status_request: Result<String, Box<dyn std::error::Error>>,
-    token: String, 
+    token: String,
     request_id: String,
     file: &str,
     html: &str,
     report_path: &str,
     generate_file: &str,
-    timeout_time: i32
+    timeout_time: &i32
 ) -> Result<(), Box<dyn std::error::Error>> {
 
     let mut status: String = serde_json::from_str(&status_request.unwrap()).unwrap_or_else(|e| {
-        println!("Error obtaining report status. Reason {:?}", e);  
+        println!("Error obtaining report status. Reason {:?}", e);
         ::std::process::exit(1);
     });
 
@@ -295,7 +296,7 @@ pub fn check_status(
 
     while status == "PREPARING" || status == "PROCESSING" {
 
-        if total_time >= timeout_time {
+        if &total_time >= timeout_time {
             return Err(
                 "Generating the report has timed out. Please try again later, or try increasing the default timeout time.".into()
             )
@@ -311,13 +312,13 @@ pub fn check_status(
         let status_request = get_submission_status(&token, &request_id);
 
         status = serde_json::from_str(&status_request.unwrap().to_string()).unwrap_or_else(|e| {
-            println!("Error obtaining report status. Reason {:?}", e);  
+            println!("Error obtaining report status. Reason {:?}", e);
             ::std::process::exit(1);
         });
     }
 
     if status == "SUCCESS" {
-        let report_results_response: Result<String, Box<dyn std::error::Error>> = 
+        let report_results_response: Result<String, Box<dyn std::error::Error>> =
             get_report_results(&token, &request_id, html, generate_file);
 
         match report_results_response {
@@ -326,7 +327,7 @@ pub fn check_status(
                     let report = create_report_file(result, file, html, report_path);
                     match report {
                         Ok(_) => println!("Your report has been created in the following location: {:?}", report_path),
-                        Err(err) => { 
+                        Err(err) => {
                             let error = format!(r#"Could not generate your report. Reason: {:?}"#, err);
                             return Err(
                                 error.replace('\"', "'").replace('\'', "").into()
@@ -338,7 +339,7 @@ pub fn check_status(
                 }
 
             },
-            Err(result) => { 
+            Err(result) => {
                 let error = format!(r#"Could not obtain report results. Reasson: {:?}"#, result.to_string());
                 return Err(
                     error.replace('\"', "'").replace('\'', "").into()
@@ -380,20 +381,52 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let matches = cli::build_cli().get_matches();
-    let has_all_required_cli_args = matches.is_present("username") && matches.is_present("password") && matches.is_present("file");
-    let has_env_creds_and_file = env_splunk_username_exists && env_splunk_pwd_exists && matches.is_present("file");
-    let mut timeout_time:i32 = matches.is_present("timeout").to_string().parse().unwrap_or(300);
+    let file_args_present: bool;
+    if let Some(_) = matches.get_one::<String>("file") {
+        file_args_present = true;
+    } else {
+        file_args_present = false;
+    }
 
-    if has_all_required_cli_args || has_env_creds_and_file {
-    
-        let mut file = matches.value_of("file").unwrap().to_string();
-        let generate_file = matches.value_of("generate_file").unwrap_or("false").to_string();
-        let mut report_path: String;
+    let mut timeout_time: i32 = 300;
+    let mut generate_file = "false";
+    let mut has_password = false;
+    let mut has_username = false;
+    if let Some(_) = matches.get_one::<String>("username") {
+        has_username = true
+    }
+    if let Some(_) = matches.get_one::<String>("password") {
+        has_password = true
+    }
+    let has_arg_creds = has_username && has_password;
+    let has_env_creds = env_splunk_username_exists && env_splunk_pwd_exists;
+    if let Some(timeout_time_some) = matches.get_one::<i32>("timeout") {
+        timeout_time = *timeout_time_some;
+    }
 
-        // If an env var is set, and the timeout time is the default of 300, then set the env value
+    if has_arg_creds || has_env_creds {
+
+        if !file_args_present {
+            return Err("A file to inspect was not provided. Provide one with --file or -f flags.".to_string().into());
+        }
+
+        let mut file: String;
+        if let Some(some_file) = matches.get_one::<String>("file") {
+            file = some_file.to_string();
+        } else {
+            let error = format!(r#"You must provide a file that you want to inspect."#);
+            return Err(
+                error.replace('\"', "'").replace('\'', "").into()
+            )
+        }
+
+        if let Some(generate_file_some) = matches.get_one::<String>("generate_file") {
+            generate_file = generate_file_some;
+        }
+
         if env_splunk_timeout && timeout_time == 300 {
             timeout_time = env_timeout;
-        } 
+        }
 
         if generate_file != "true" && generate_file != "false" {
             let error = format!(r#"The generate_file flag must be 'true' or 'false', not {:?}"#, generate_file);
@@ -402,18 +435,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             )
         }
 
-        if has_all_required_cli_args {
-            username = matches.value_of("username").unwrap().to_string();
-            password = matches.value_of("password").unwrap().to_string();
-        } 
+        if has_arg_creds {
+            if let Some(username_some) = matches.get_one::<String>("username") {
+                username = username_some.to_string();
+            }
+            if let Some(password_some) = matches.get_one::<String>("password") {
+                password = password_some.to_string();
+            }
+        }
 
         let existing_tags = tags::tags();
 
-        let included_tags_vec = matches.values_of("included_tags").unwrap().collect::<Vec<&str>>();
+        let included_tags_vec: Vec<String> = matches.get_raw("included_tags")
+            .expect("included_tags expected")
+            .into_iter().map(|osi| osi.to_str().unwrap().into()).collect::<Vec<String>>();
 
         if !included_tags_vec.is_empty() {
-            let provided_tags_vec = matches.values_of("included_tags").unwrap().collect::<Vec<&str>>();
-            for provided_tag in provided_tags_vec.iter() {
+            for provided_tag in included_tags_vec.iter() {
                 if !existing_tags.contains(&provided_tag.to_string()) {
                     let error = format!(r#"{:?} is not a known tag."#, provided_tag);
                     return Err(
@@ -429,13 +467,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		}
 
         let included_tags = included_tags_vec.join(",");
+        let mut html: String = String::from("true");
+        let mut report_path: String = String::from("./");
 
-        let html = matches.value_of("html").unwrap_or("true");
+        if let Some(html_some) = matches.get_one::<String>("html") {
+            html = html_some.to_string();
+        }
 
         if let Ok(report_path_env) = env::var("REPORT_PATH") {
             report_path = report_path_env;
         } else {
-            report_path = matches.value_of("report_path").unwrap_or("./").to_string();
+            if let Some(report_path_some) = matches.get_one::<String>("report_path") {
+                report_path = report_path_some.to_string();
+            }
         }
 
         if file.starts_with('~') {
@@ -445,12 +489,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if report_path.starts_with('~') {
             report_path.replace_range(0..1, dirs::home_dir().unwrap().to_str().unwrap());
         }
-        
+
         let auth_token_result: Result<String, Box<dyn std::error::Error>> = get_auth_token(&username, &password);
 
         let token_str: String = match auth_token_result {
             Ok(tok) => tok,
-            Err(err) => { 
+            Err(err) => {
                 let error = format!(r#"Could not obtain auth_token. Reason: {:?}"#, err);
                 return Err(
                     error.replace('\"', "'").replace('\'', "").into()
@@ -469,7 +513,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
 
         let submit_app_response: Result<String, Box<dyn std::error::Error>> = submit_app(&token, &file, &included_tags);
-        
+
         if let Err(request_id_str) = &submit_app_response {
 
             let error = format!(r#"Error: {:?}"#, &request_id_str.to_string());
@@ -480,23 +524,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let request_id: String = match serde_json::from_str(&submit_app_response.unwrap()) {
             Ok(res) => res,
-            Err(err) => { 
+            Err(err) => {
                 let error = format!(r#"Could not obtain the request_id: {:?}"#, err);
                 return Err(
                     error.replace('\"', "'").replace('\'', "").into()
                 )
             }
         };
-    
+
         let status_request: Result<String, Box<dyn std::error::Error>> = get_submission_status(&token, &request_id);
-        if let Err(status) = check_status(status_request, token, request_id, &file, html, &report_path, &generate_file, timeout_time) {
+        if let Err(status) = check_status(status_request, token, request_id, &file, &html, &report_path, &generate_file, &timeout_time) {
             return Err(status.to_string().into())
         }
 
     } else {
-        return Err("You must provide your username, password, and file you want to inspect.".to_string().into());
+        return Err("You must provide your username, password. These can be passed as arguments or set as ENV variables. Run appinspect --help for more information.".to_string().into());
     }
-    
+
     Ok(())
 
 }

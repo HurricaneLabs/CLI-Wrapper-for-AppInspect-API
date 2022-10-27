@@ -9,4 +9,5 @@ target/debug/
 target/release/.fingerprint/
 target/release/.cargo-lock
 target/.rustc_info.json
+target/CACHEDIR.TAG
 Cargo.lock

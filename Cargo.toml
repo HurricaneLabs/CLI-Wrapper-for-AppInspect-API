@@ -1,6 +1,6 @@
 [package]
 name = "appinspect"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Ian Gillespie <ian@hurricanelabs.com>"]
 edition = "2018"
 # build = "build.rs"
@@ -11,12 +11,12 @@ edition = "2018"
 clap = "3.1.12"
 
 [dependencies]
-reqwest = { version = "0.10", features = ["blocking", "json"] }
+reqwest = { version = "0.11", features = ["blocking", "json", "multipart"] }
 tokio = { version = "1.17", features = ["full"] }
 serde = { version = "1.0.55", features = ["derive"] }
 openssl = { version = "0.10", features = ["vendored"] }
 serde_json = "1.0.55"
-clap = "3.1.12"
+clap = "4.0.18"
 dirs = "4.0.0"
 html2text = "0.4.2"
 anyhow = "1.0.38"
