@@ -1,0 +1,3 @@
+[package.metadata.cross.target.x86_64-apple-darwin]
+xargo = false
+image = "wasmcloud/cross:x86_64-apple-darwin"
