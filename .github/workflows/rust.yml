@@ -12,7 +12,7 @@ on:
       contents: write  # for softprops/action-gh-release to create GitHub release
     branches: [ development ]
     tags:
-      - 'v*-beta'
+      - 'v*-rc'
 permissions: read-all
 
 env:
