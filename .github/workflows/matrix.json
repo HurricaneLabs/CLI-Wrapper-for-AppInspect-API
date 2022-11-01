@@ -23,7 +23,7 @@
     "release-path" : "./target/release/",
     "file-name" : "appinspect",
     "compressed-file-name" : "macos-appinspect.tar.gz",
-    "dependency-install-command" : "brew install openssl",
+    "dependency-install-command" : "brew install openssl && rustup target add x86_64-apple-darwin",
     "os" : "macos-latest"
   }
 ]
