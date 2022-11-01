@@ -45,12 +45,11 @@ jobs:
       matrix:
         cfg: ${{ fromJson(needs.matrix.outputs.matrix) }}
     steps:
-      #- name: Harden Runner
-      #  uses: step-security/harden-runner@9b0655f430fba8c7001d4e38f8d4306db5c6e0ab # v1
-      #  with:
-      #    egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
-      #- uses: actions/checkout@544eadc6bf3d226fd7a7a9f0dc5b5bf7ca0675b9 # v1
+      - name: Harden Runner
+        uses: step-security/harden-runner@9b0655f430fba8c7001d4e38f8d4306db5c6e0ab # v1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      - uses: actions/checkout@544eadc6bf3d226fd7a7a9f0dc5b5bf7ca0675b9 # v1
       - name: Install Dependencies
         run: ${{ matrix.cfg.dependency-install-command }}
       - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
@@ -88,7 +87,7 @@ jobs:
       #- uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
       #  with:
       #    name: cli-binary-linux
-      #    path: cli-binary-linux    
+      #    path: cli-binary-linux
       #- uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
       #  with:
       #    name: cli-binary-windows
