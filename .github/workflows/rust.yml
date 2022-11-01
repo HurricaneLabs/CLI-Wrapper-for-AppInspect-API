@@ -45,12 +45,12 @@ jobs:
       matrix:
         cfg: ${{ fromJson(needs.matrix.outputs.matrix) }}
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@9b0655f430fba8c7001d4e38f8d4306db5c6e0ab # v1
-        with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      #- name: Harden Runner
+      #  uses: step-security/harden-runner@9b0655f430fba8c7001d4e38f8d4306db5c6e0ab # v1
+      #  with:
+      #    egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
-      - uses: actions/checkout@544eadc6bf3d226fd7a7a9f0dc5b5bf7ca0675b9 # v1
+      #- uses: actions/checkout@544eadc6bf3d226fd7a7a9f0dc5b5bf7ca0675b9 # v1
       - name: Install Dependencies
         run: ${{ matrix.cfg.dependency-install-command }}
       - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
@@ -85,34 +85,34 @@ jobs:
       - name: Get the version
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/cli-}
-      - uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
-        with:
-          name: cli-binary-linux
-          path: cli-binary-linux    
-      - uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
-        with:
-          name: cli-binary-windows
-          path: cli-binary-windows
+      #- uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
+      #  with:
+      #    name: cli-binary-linux
+      #    path: cli-binary-linux    
+      #- uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
+      #  with:
+      #    name: cli-binary-windows
+      #    path: cli-binary-windows
       - uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
         with:
           name: cli-binary-macos
           path: cli-binary-macos
-      - run: ls -lf cli-binary-linux/
-      - run: ls -lf cli-binary-windows/
+      #- run: ls -lf cli-binary-linux/
+      #- run: ls -lf cli-binary-windows/
       - run: ls -lf cli-binary-macos/
       - run: |
-          mkdir -p cli-binary-linux/appinspect-${{ steps.tag_version.outputs.new_tag }}-linux-x86_64
-          mv cli-binary-linux/linux-appinspect.tar.gz cli-binary-linux/appinspect-${{ steps.tag_version.outputs.new_tag }}-linux-x86_64/linux-appinspect.tar.gz
+          #mkdir -p cli-binary-linux/appinspect-${{ steps.tag_version.outputs.new_tag }}-linux-x86_64
+          #mv cli-binary-linux/linux-appinspect.tar.gz cli-binary-linux/appinspect-${{ steps.tag_version.outputs.new_tag }}-linux-x86_64/linux-appinspect.tar.gz
           mkdir -p cli-binary-macos/appinspect-${{ steps.tag_version.outputs.new_tag }}-macos-x86_64
           mv cli-binary-macos/macos-appinspect.tar.gz cli-binary-macos/appinspect-${{ steps.tag_version.outputs.new_tag }}-macos-x86_64/macos-appinspect.tar.gz
-          mkdir -p cli-binary-windows/appinspect-${{ steps.tag_version.outputs.new_tag }}-windows-x86_64
-          mv cli-binary-windows/windows-appinspect.tar.gz cli-binary-windows/appinspect-${{ steps.tag_version.outputs.new_tag }}-windows-x86_64/windows-appinspect.tar.gz
+          #mkdir -p cli-binary-windows/appinspect-${{ steps.tag_version.outputs.new_tag }}-windows-x86_64
+          #mv cli-binary-windows/windows-appinspect.tar.gz cli-binary-windows/appinspect-${{ steps.tag_version.outputs.new_tag }}-windows-x86_64/windows-appinspect.tar.gz
       - name: Release
         uses: softprops/action-gh-release@4716bde57e0fcda6ce83002e2469b8a90e560573 # v1
         with:
           #tag_name: ${{ steps.tag_version.outputs.new_tag }}
           tag_name: ${{ github.event.release.tag_name }}
           files: |
-            cli-binary-linux/*/*
+            #cli-binary-linux/*/*
             cli-binary-macos/*/*
-            cli-binary-windows/*/*
+            #cli-binary-windows/*/*

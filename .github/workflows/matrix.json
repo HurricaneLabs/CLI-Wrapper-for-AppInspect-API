@@ -1,23 +1,5 @@
 [
   {
-    "target" : "x86_64-pc-windows-msvc",
-    "binary-name" : "cli-binary-windows",
-    "release-path" : "./target/x86_64-pc-windows-msvc/release/",
-    "file-name" : "appinspect.exe",
-    "compressed-file-name" : "windows-appinspect.tar.gz",
-    "dependency-install-command" : "",
-    "os" : "windows-latest"
-  },
-  {
-    "target" : "x86_64-unknown-linux-gnu",
-    "binary-name" : "cli-binary-linux",
-    "release-path" : "./target/x86_64-unknown-linux-gnu/release/",
-    "file-name" : "appinspect",
-    "compressed-file-name" : "linux-appinspect.tar.gz",
-    "dependency-install-command" : "sudo apt-get install -y build-essential libssl-dev pkg-config mingw-w64",
-    "os" : "ubuntu-latest"
-  },
-  {
     "target" : "x86_64-apple-darwin",
     "binary-name" : "cli-binary-macos",
     "release-path" : "./target/release/",
