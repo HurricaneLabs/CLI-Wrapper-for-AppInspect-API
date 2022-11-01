@@ -20,7 +20,7 @@
   {
     "target" : "x86_64-apple-darwin",
     "binary-name" : "cli-binary-macos",
-    "release-path" : "./target/release/",
+    "release-path" : "./target/x86_64-apple-darwin/release/",
     "file-name" : "appinspect",
     "compressed-file-name" : "macos-appinspect.tar.gz",
     "dependency-install-command" : "brew install openssl && rustup target add x86_64-apple-darwin",
