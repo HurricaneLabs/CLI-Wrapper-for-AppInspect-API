@@ -62,7 +62,7 @@ jobs:
         uses: actions-rs/cargo@e7f754b8e09f70ad8eb2c5aebf61e58e8403b210 # v1
         with:
           command: build
-          args: --release --target=${{ matrix.cfg.target }}
+          args: --release
           use-cross: true
       - name: compress
         uses: master-atul/tar-action@adb4b8023b47be269c0203b4dd80257483821499 # v1.0.2
