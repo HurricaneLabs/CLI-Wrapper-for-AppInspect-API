@@ -8,7 +8,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-clap = "3.1.12"
+clap = "4.0.26"
 
 [dependencies]
 reqwest = { version = "0.10", features = ["blocking", "json"] }
@@ -16,7 +16,7 @@ tokio = { version = "1.17", features = ["full"] }
 serde = { version = "1.0.55", features = ["derive"] }
 openssl = { version = "0.10", features = ["vendored"] }
 serde_json = "1.0.55"
-clap = "3.1.12"
+clap = "4.0.26"
 dirs = "4.0.0"
 html2text = "0.4.2"
 anyhow = "1.0.38"
