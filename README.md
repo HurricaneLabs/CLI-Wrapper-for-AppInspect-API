@@ -76,7 +76,7 @@ OPTIONS:
 Optionally, if you store your SPLUNK_PASSWORD, SPLUNK_USERNAME, and REPORT_PATH as env vars then you can bypass those arguments.
 
 # Run Example
-    appinspect -f /path/to/app.tar.gz -t cloud
+`appinspect -f /path/to/app.tar.gz -t cloud,jquery`
 
 # Updates
 v 0.2.1
@@ -84,6 +84,7 @@ v 0.2.1
     - Note: Tags must be provided as a comma delimited list:
          `-t=<tag1>,<tagN>`
 - Reqwest update to v0.11
+- Added `private_victoria` and `private_classic` tags
 
 v 0.2.0
 - Dependency updates

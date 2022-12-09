@@ -1,18 +1,18 @@
 extern crate clap;
-use std::fs::File;
+use std::ffi::OsString;
 use std::fs::create_dir_all;
+use std::fs::File;
 use std::io;
 use std::io::Write;
-use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::{thread, time};
 
-use reqwest::header::{HeaderMap, CACHE_CONTROL, CONTENT_TYPE};
+use html2text::from_read;
 use reqwest::blocking::multipart;
+use reqwest::header::{HeaderMap, CACHE_CONTROL, CONTENT_TYPE};
+use std::env;
 use std::error::Error;
 use std::fmt;
-use std::env;
-use html2text::from_read;
 mod cli;
 mod tags;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
@@ -29,12 +29,12 @@ impl fmt::Display for CustomError {
 impl Error for CustomError {}
 
 fn get_auth_token(username: &str, password: &str) -> Result<String, Box<dyn std::error::Error>> {
-
     // Result
     let res = reqwest::blocking::Client::new()
         .get("https://api.splunk.com/2.0/rest/login/splunk")
         .basic_auth(username, Some(password))
-        .send()?.json()?;
+        .send()?
+        .json()?;
 
     // Convert to JSON response
     let json_response: serde_json::Value = res;
@@ -42,17 +42,20 @@ fn get_auth_token(username: &str, password: &str) -> Result<String, Box<dyn std:
     // Check status
     if json_response["status_code"] == "401" {
         return Err(
-            "Unauthorized! Please check your credentials before attempting to authenticate again.".into()
-        )
+            "Unauthorized! Please check your credentials before attempting to authenticate again."
+                .into(),
+        );
     }
 
     // Return Result<String>
     Ok(json_response["data"]["token"].to_string())
-
 }
 
-fn submit_app(token: &str, file_path: &str, included_tags: &str) -> Result<String, Box<dyn std::error::Error>> {
-
+fn submit_app(
+    token: &str,
+    file_path: &str,
+    included_tags: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
     let mut headers_map = HeaderMap::new();
 
     headers_map.insert(CACHE_CONTROL, "no_cache".parse().unwrap());
@@ -75,41 +78,46 @@ fn submit_app(token: &str, file_path: &str, included_tags: &str) -> Result<Strin
         .multipart(final_form)
         .headers(headers_map)
         .bearer_auth(token)
-        .send()?.json()?;
+        .send()?
+        .json()?;
 
     // Converts the Future type to a Result<Response, Error>
     let res: serde_json::Value = request_build;
 
-    if res["message"] == "File type not allowed.  Files must be [\'gz\', \'tgz\', \'zip\', \'spl\', \'tar\']" {
-        return Err(Box::new(CustomError(res["message"].to_string())))
+    if res["message"]
+        == "File type not allowed.  Files must be [\'gz\', \'tgz\', \'zip\', \'spl\', \'tar\']"
+    {
+        return Err(Box::new(CustomError(res["message"].to_string())));
     }
 
-    let response_id = serde_json::to_string(&res["request_id"]).map_err(|err| Box::new(err) as Box<dyn std::error::Error>);
+    let response_id = serde_json::to_string(&res["request_id"])
+        .map_err(|err| Box::new(err) as Box<dyn std::error::Error>);
 
-    Ok(response_id.unwrap_or("0".to_string()))
-
+    Ok(response_id.unwrap_or_else(|_| "0".to_string()))
 }
 
-fn get_submission_status(token: &str, request_id: &str) -> Result<String, Box<dyn std::error::Error>> {
-
+fn get_submission_status(
+    token: &str,
+    request_id: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
     let mut url = "https://appinspect.splunk.com/v1/app/validate/status/".to_string();
 
     url.push_str(request_id);
 
     let client = reqwest::blocking::Client::new();
-    let request_build = client
-        .get(&url)
-        .bearer_auth(token)
-        .send()?.json()?;
+    let request_build = client.get(&url).bearer_auth(token).send()?.json()?;
 
     let res: serde_json::Value = request_build;
 
     Ok(res["status"].to_string())
-
 }
 
-pub fn get_report_results(token: &str, request_id: &str, html: &str, generate_file: &str) -> Result<String, Box<dyn std::error::Error>> {
-
+pub fn get_report_results(
+    token: &str,
+    request_id: &str,
+    html: &str,
+    generate_file: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
     let mut url = "https://appinspect.splunk.com/v1/app/report/".to_string();
     url.push_str(request_id);
 
@@ -122,10 +130,10 @@ pub fn get_report_results(token: &str, request_id: &str, html: &str, generate_fi
     let client = reqwest::blocking::Client::new();
 
     let request_build = client
-    .get(&url)
-    .headers(headers_map)
-    .bearer_auth(token)
-    .send()?;
+        .get(&url)
+        .headers(headers_map)
+        .bearer_auth(token)
+        .send()?;
 
     if html == "true" || generate_file == "false" {
         let html_request = request_build.text()?;
@@ -138,8 +146,12 @@ pub fn get_report_results(token: &str, request_id: &str, html: &str, generate_fi
     }
 }
 
-pub fn create_report_file(report_data: String, file: &str, html: &str, report_path: &str) -> std::io::Result<String> {
-
+pub fn create_report_file(
+    report_data: String,
+    file: &str,
+    html: &str,
+    report_path: &str,
+) -> std::io::Result<String> {
     if report_path != "./" {
         create_dir_all(report_path)?;
     }
@@ -147,7 +159,7 @@ pub fn create_report_file(report_data: String, file: &str, html: &str, report_pa
     let mut path = PathBuf::new();
     let mut file_stem = match file.file_stem() {
         Some(stem) => OsString::from(stem),
-        None =>  OsString::from("_")
+        None => OsString::from("_"),
     };
 
     path.push(report_path);
@@ -159,9 +171,9 @@ pub fn create_report_file(report_data: String, file: &str, html: &str, report_pa
 
         for line in report_data.lines() {
             let current_line = line.to_string().replace('\n', "");
-            file.write(current_line.as_bytes()).expect("Unable to write data to report.");
+            file.write_all(current_line.as_bytes())
+                .expect("Unable to write data to report.");
         }
-
     } else {
         file_stem.push(".json");
         path.push(file_stem);
@@ -170,7 +182,6 @@ pub fn create_report_file(report_data: String, file: &str, html: &str, report_pa
     }
 
     Ok("Your report is now ready.".to_string())
-
 }
 
 fn write_color(text: String, color: Color) -> io::Result<()> {
@@ -185,8 +196,12 @@ fn write_color(text: String, color: Color) -> io::Result<()> {
         Color::Cyan => stdout.set_color(ColorSpec::new().set_fg(Some(Color::Cyan)))?,
         Color::Magenta => stdout.set_color(ColorSpec::new().set_fg(Some(Color::Magenta)))?,
         Color::White => stdout.set_color(ColorSpec::new().set_fg(Some(Color::White)))?,
-        Color::Ansi256(value) => stdout.set_color(ColorSpec::new().set_fg(Some(Color::Ansi256(value))))?,
-        Color::Rgb(r,g,b) => stdout.set_color(ColorSpec::new().set_fg(Some(Color::Rgb(r,g,b))))?,
+        Color::Ansi256(value) => {
+            stdout.set_color(ColorSpec::new().set_fg(Some(Color::Ansi256(value))))?
+        }
+        Color::Rgb(r, g, b) => {
+            stdout.set_color(ColorSpec::new().set_fg(Some(Color::Rgb(r, g, b))))?
+        }
         Color::__Nonexhaustive => stdout.set_color(ColorSpec::new().set_fg(Some(Color::White)))?,
     };
 
@@ -213,69 +228,61 @@ pub fn output_report_to_cli(report_data: String) {
             if line.contains("Failures") {
                 write_color(line, Color::Red).expect("Could not apply red.");
                 current_color = "red";
-            }
-            else if line.contains("Warnings") {
-                write_color(line, Color::Rgb(240,135,22)).expect("Could not apply rgb color.");
+            } else if line.contains("Warnings") {
+                write_color(line, Color::Rgb(240, 135, 22)).expect("Could not apply rgb color.");
                 current_color = "orange";
-            }
-            else if line.contains("Errors") {
-                write_color(line, Color::Rgb(219,29,199)).expect("Could not apply rgb color.");
+            } else if line.contains("Errors") {
+                write_color(line, Color::Rgb(219, 29, 199)).expect("Could not apply rgb color.");
                 current_color = "purple";
-            }
-            else if line.contains("Not Applicable") {
-                write_color(line, Color::Rgb(230,235,233)).expect("Could not apply rgb color.");
+            } else if line.contains("Not Applicable") {
+                write_color(line, Color::Rgb(230, 235, 233)).expect("Could not apply rgb color.");
                 current_color = "gray";
-            }
-            else if line.contains("Manual Checks") {
+            } else if line.contains("Manual Checks") {
                 write_color(line, Color::Blue).expect("Could not apply blue.");
                 current_color = "blue";
-            }
-            else if line.contains("Skipped") {
-                write_color(line, Color::Rgb(0,217,23)).expect("Could not apply rgb color.");
+            } else if line.contains("Skipped") {
+                write_color(line, Color::Rgb(0, 217, 23)).expect("Could not apply rgb color.");
                 current_color = "light_blue";
-            }
-            else if line.contains("Successes") {
-                write_color(line, Color::Rgb(4,233,32)).expect("Could not apply rgb color.");
+            } else if line.contains("Successes") {
+                write_color(line, Color::Rgb(4, 233, 32)).expect("Could not apply rgb color.");
                 current_color = "green";
-            }
-            else if line.contains("[ success ]") || current_color == "green" {
-                write_color(line, Color::Rgb(4,233,32)).expect("Could not apply rgb color.");
+            } else if line.contains("[ success ]") || current_color == "green" {
+                write_color(line, Color::Rgb(4, 233, 32)).expect("Could not apply rgb color.");
                 current_color = "green"
-            }
-            else if line.contains("[ failure ]") || line.contains("[ Failure Summary ]") || current_color == "red" {
+            } else if line.contains("[ failure ]")
+                || line.contains("[ Failure Summary ]")
+                || current_color == "red"
+            {
                 write_color(line, Color::Red).expect("Could not apply red.");
                 current_color = "red";
-            }
-            else if line.contains("[ not_applicable ]") || current_color == "gray" {
-                write_color(line, Color::Rgb(230,235,233)).expect("Could not apply rgb color.");
+            } else if line.contains("[ not_applicable ]") || current_color == "gray" {
+                write_color(line, Color::Rgb(230, 235, 233)).expect("Could not apply rgb color.");
                 current_color = "gray";
-            }
-            else if line.contains("[ manual_check ]") || current_color == "blue" {
+            } else if line.contains("[ manual_check ]") || current_color == "blue" {
                 write_color(line, Color::Blue).expect("Could not apply blue.");
                 current_color = "blue";
-            }
-            else if line.contains("[ skipped ]") || current_color == "light_blue" {
-                write_color(line, Color::Rgb(0,217,235)).expect("Could not apply rgb color.");
+            } else if line.contains("[ skipped ]") || current_color == "light_blue" {
+                write_color(line, Color::Rgb(0, 217, 235)).expect("Could not apply rgb color.");
                 current_color = "light_blue";
-            }
-            else if line.contains("[ errors ]") || current_color == "purple" {
-                write_color(line, Color::Rgb(219,29,199)).expect("Could not apply rgb color.");
+            } else if line.contains("[ errors ]") || current_color == "purple" {
+                write_color(line, Color::Rgb(219, 29, 199)).expect("Could not apply rgb color.");
                 current_color = "purple";
-            }
-            else if line.contains("[ warning ]") || line.contains("[ Warning Summary ]") || current_color == "orange" {
-                write_color(line, Color::Rgb(240,135,22)).expect("Could not apply rgb color.");
+            } else if line.contains("[ warning ]")
+                || line.contains("[ Warning Summary ]")
+                || current_color == "orange"
+            {
+                write_color(line, Color::Rgb(240, 135, 22)).expect("Could not apply rgb color.");
                 current_color = "orange";
-            }
-            else if !line.trim().is_empty() {
+            } else if !line.trim().is_empty() {
                 print!("{}", line);
                 current_color = "";
             }
             io::stdout().flush().unwrap();
         }
     }
-
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn check_status(
     status_request: Result<String, Box<dyn std::error::Error>>,
     token: String,
@@ -284,9 +291,8 @@ pub fn check_status(
     html: &str,
     report_path: &str,
     generate_file: &str,
-    timeout_time: &i32
+    timeout_time: &i32,
 ) -> Result<(), Box<dyn std::error::Error>> {
-
     let mut status: String = serde_json::from_str(&status_request.unwrap()).unwrap_or_else(|e| {
         println!("Error obtaining report status. Reason {:?}", e);
         ::std::process::exit(1);
@@ -295,11 +301,10 @@ pub fn check_status(
     let mut total_time: i32 = 0;
 
     while status == "PREPARING" || status == "PROCESSING" {
-
         if &total_time >= timeout_time {
             return Err(
                 "Generating the report has timed out. Please try again later, or try increasing the default timeout time.".into()
-            )
+            );
         }
 
         println!("Report is processing. Will wait 30 seconds and check again.");
@@ -326,41 +331,40 @@ pub fn check_status(
                 if generate_file == "true" {
                     let report = create_report_file(result, file, html, report_path);
                     match report {
-                        Ok(_) => println!("Your report has been created in the following location: {:?}", report_path),
+                        Ok(_) => println!(
+                            "Your report has been created in the following location: {:?}",
+                            report_path
+                        ),
                         Err(err) => {
-                            let error = format!(r#"Could not generate your report. Reason: {:?}"#, err);
-                            return Err(
-                                error.replace('\"', "'").replace('\'', "").into()
-                            )
+                            let error =
+                                format!(r#"Could not generate your report. Reason: {:?}"#, err);
+                            return Err(error.replace('\"', "'").replace('\'', "").into());
                         }
                     }
                 } else {
                     output_report_to_cli(result);
                 }
-
-            },
+            }
             Err(result) => {
-                let error = format!(r#"Could not obtain report results. Reasson: {:?}"#, result.to_string());
-                return Err(
-                    error.replace('\"', "'").replace('\'', "").into()
-                )
+                let error = format!(
+                    r#"Could not obtain report results. Reasson: {:?}"#,
+                    result.to_string()
+                );
+                return Err(error.replace('\"', "'").replace('\'', "").into());
             }
         }
-
     }
 
     Ok(())
-
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut username = String::new();
     let mut password = String::new();
     let mut env_splunk_pwd_exists = false;
     let mut env_splunk_username_exists = false;
     let mut env_splunk_timeout = false;
-    let mut env_timeout:i32 = 0;
+    let mut env_timeout: i32 = 0;
 
     if let Ok(password_env) = env::var("SPLUNK_PASSWORD") {
         env_splunk_pwd_exists = true;
@@ -381,21 +385,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let matches = cli::build_cli().get_matches();
-    let file_args_present: bool;
-    if let Some(_) = matches.get_one::<String>("file") {
+    let mut file_args_present: bool = false;
+    if matches.get_one::<String>("file").is_some() {
         file_args_present = true;
-    } else {
-        file_args_present = false;
     }
 
     let mut timeout_time: i32 = 300;
     let mut generate_file = "false";
     let mut has_password = false;
     let mut has_username = false;
-    if let Some(_) = matches.get_one::<String>("username") {
+    if matches.get_one::<String>("username").is_some() {
         has_username = true
     }
-    if let Some(_) = matches.get_one::<String>("password") {
+    if matches.get_one::<String>("password").is_some() {
         has_password = true
     }
     let has_arg_creds = has_username && has_password;
@@ -405,19 +407,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if has_arg_creds || has_env_creds {
-
         if !file_args_present {
-            return Err("A file to inspect was not provided. Provide one with --file or -f flags.".to_string().into());
+            return Err(
+                "A file to inspect was not provided. Provide one with --file or -f flags."
+                    .to_string()
+                    .into(),
+            );
         }
 
+        #[allow(clippy::needless_late_init)]
         let mut file: String;
         if let Some(some_file) = matches.get_one::<String>("file") {
             file = some_file.to_string();
         } else {
-            let error = format!(r#"You must provide a file that you want to inspect."#);
-            return Err(
-                error.replace('\"', "'").replace('\'', "").into()
-            )
+            let error = r#"You must provide a file that you want to inspect."#.to_string();
+            return Err(error.replace('\"', "'").replace('\'', "").into());
         }
 
         if let Some(generate_file_some) = matches.get_one::<String>("generate_file") {
@@ -429,10 +433,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         if generate_file != "true" && generate_file != "false" {
-            let error = format!(r#"The generate_file flag must be 'true' or 'false', not {:?}"#, generate_file);
-            return Err(
-                error.replace('\"', "'").replace('\'', "").into()
-            )
+            let error = format!(
+                r#"The generate_file flag must be 'true' or 'false', not {:?}"#,
+                generate_file
+            );
+            return Err(error.replace('\"', "'").replace('\'', "").into());
         }
 
         if has_arg_creds {
@@ -446,25 +451,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let existing_tags = tags::tags();
 
-        let included_tags_vec: Vec<String> = matches.get_raw("included_tags")
+        let included_tags_vec: Vec<String> = matches
+            .get_raw("included_tags")
             .expect("included_tags expected")
-            .into_iter().map(|osi| osi.to_str().unwrap().into()).collect::<Vec<String>>();
+            .into_iter()
+            .map(|osi| osi.to_str().unwrap().into())
+            .collect::<Vec<String>>();
 
         if !included_tags_vec.is_empty() {
             for provided_tag in included_tags_vec.iter() {
-                if !existing_tags.contains(&provided_tag.to_string()) {
+                if !existing_tags.contains(provided_tag) {
                     let error = format!(r#"{:?} is not a known tag."#, provided_tag);
-                    return Err(
-                        error.replace('\"', "'").replace('\'', "").into()
-                    )
+                    return Err(error.replace('\"', "'").replace('\'', "").into());
                 }
             }
         } else {
-        	let error = r#"You must provide at least one tag i.e. -t cloud"#.to_string();
-            return Err(
-                error.replace('\"', "'").replace('\'', "").into()
-            )
-		}
+            let error = r#"You must provide at least one tag i.e. -t cloud"#.to_string();
+            return Err(error.replace('\"', "'").replace('\'', "").into());
+        }
 
         let included_tags = included_tags_vec.join(",");
         let mut html: String = String::from("true");
@@ -476,10 +480,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         if let Ok(report_path_env) = env::var("REPORT_PATH") {
             report_path = report_path_env;
-        } else {
-            if let Some(report_path_some) = matches.get_one::<String>("report_path") {
-                report_path = report_path_some.to_string();
-            }
+        } else if let Some(report_path_some) = matches.get_one::<String>("report_path") {
+            report_path = report_path_some.to_string();
         }
 
         if file.starts_with('~') {
@@ -490,57 +492,58 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             report_path.replace_range(0..1, dirs::home_dir().unwrap().to_str().unwrap());
         }
 
-        let auth_token_result: Result<String, Box<dyn std::error::Error>> = get_auth_token(&username, &password);
+        let auth_token_result: Result<String, Box<dyn std::error::Error>> =
+            get_auth_token(&username, &password);
 
         let token_str: String = match auth_token_result {
             Ok(tok) => tok,
             Err(err) => {
                 let error = format!(r#"Could not obtain auth_token. Reason: {:?}"#, err);
-                return Err(
-                    error.replace('\"', "'").replace('\'', "").into()
-                )
+                return Err(error.replace('\"', "'").replace('\'', "").into());
             }
         };
 
         let token: String = match serde_json::from_str(&token_str) {
-            Ok(val) => {val},
+            Ok(val) => val,
             Err(_) => {
                 let error = String::from("The AppInspect API may have had trouble parsing your password. Check that it doesn't contain invalid characters such as a newline.");
-                return Err(
-                    error.into()
-                )
+                return Err(error.into());
             }
         };
 
-        let submit_app_response: Result<String, Box<dyn std::error::Error>> = submit_app(&token, &file, &included_tags);
+        let submit_app_response: Result<String, Box<dyn std::error::Error>> =
+            submit_app(&token, &file, &included_tags);
 
         if let Err(request_id_str) = &submit_app_response {
-
             let error = format!(r#"Error: {:?}"#, &request_id_str.to_string());
-            return Err(
-                error.replace('\"', "'").replace('\'', "").into()
-            )
+            return Err(error.replace('\"', "'").replace('\'', "").into());
         }
 
         let request_id: String = match serde_json::from_str(&submit_app_response.unwrap()) {
             Ok(res) => res,
             Err(err) => {
                 let error = format!(r#"Could not obtain the request_id: {:?}"#, err);
-                return Err(
-                    error.replace('\"', "'").replace('\'', "").into()
-                )
+                return Err(error.replace('\"', "'").replace('\'', "").into());
             }
         };
 
-        let status_request: Result<String, Box<dyn std::error::Error>> = get_submission_status(&token, &request_id);
-        if let Err(status) = check_status(status_request, token, request_id, &file, &html, &report_path, &generate_file, &timeout_time) {
-            return Err(status.to_string().into())
+        let status_request: Result<String, Box<dyn std::error::Error>> =
+            get_submission_status(&token, &request_id);
+        if let Err(status) = check_status(
+            status_request,
+            token,
+            request_id,
+            &file,
+            &html,
+            &report_path,
+            generate_file,
+            &timeout_time,
+        ) {
+            return Err(status.to_string().into());
         }
-
     } else {
         return Err("You must provide your username, password. These can be passed as arguments or set as ENV variables. Run appinspect --help for more information.".to_string().into());
     }
 
     Ok(())
-
 }

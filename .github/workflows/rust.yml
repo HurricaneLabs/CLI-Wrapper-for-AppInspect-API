@@ -2,18 +2,16 @@ name: Rust
 
 on:
   release:
-    permissions:
-      contents: write  # for softprops/action-gh-release to create GitHub release
     branches: [ main ]
     tags:
       - 'v*'
   push:
-    permissions:
-      contents: write  # for softprops/action-gh-release to create GitHub release
     branches: [ development ]
     tags:
       - 'v*-rc'
-permissions: read-all
+
+permissions:
+  contents: write
 
 env:
   CARGO_TERM_COLOR: always
@@ -36,7 +34,6 @@ jobs:
         run: |
           TASKS=$(echo $(cat .github/workflows/matrix.json))
           echo "::set-output name=matrix::${TASKS//'%'/'%25'}"
-
   cli-build:
     needs: [matrix]
     runs-on: ${{ matrix.cfg.os }}
@@ -107,13 +104,10 @@ jobs:
           mkdir -p cli-binary-windows/appinspect-${{ steps.tag_version.outputs.new_tag }}-windows-x86_64
           mv cli-binary-windows/windows-appinspect.tar.gz cli-binary-windows/appinspect-${{ steps.tag_version.outputs.new_tag }}-windows-x86_64/windows-appinspect.tar.gz
       - name: Release
-        uses: softprops/action-gh-release@4716bde57e0fcda6ce83002e2469b8a90e560573 # v1
+        uses: softprops/action-gh-release@v1
         with:
-          token: ${{ secrets.APPINSPECT_SECRET }}
-          #tag_name: ${{ steps.tag_version.outputs.new_tag }}
           tag_name: ${{ github.event.release.tag_name }}
           files: |
             cli-binary-linux/*/*
             cli-binary-macos/*/*
             cli-binary-windows/*/*
-        env:

@@ -1,4 +1,4 @@
-use clap::{Command, Arg};
+use clap::{Arg, Command};
 
 pub fn build_cli() -> Command {
     Command::new("AppInspect CLI for API")

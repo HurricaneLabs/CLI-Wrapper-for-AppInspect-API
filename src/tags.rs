@@ -42,6 +42,6 @@ pub fn tags() -> Vec<String> {
         "splunk_7_3".to_string(),
         "splunk_8_0".to_string(),
         "splunk_appinspect".to_string(),
-        "web_conf".to_string()
-    ]
+        "web_conf".to_string(),
+    ];
 }
