@@ -31,7 +31,7 @@ pub fn build_cli() -> Command {
             .long("included_tags")
             .required(true)
             .use_value_delimiter(true)
-            .help("Multiple tags allowed i.e. -t=foo,bar etc. All tags provided here https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference/ can now be passed in as options i.e. -t jquery -t cloud.")
+            .help("Multiple tags allowed i.e. --included_tags=foo,bar etc. All tags provided here https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference/ can now be passed in as options i.e. -t jquery -t cloud.")
         )
         .arg(Arg::new("generate_file")
             .long("generate_file")

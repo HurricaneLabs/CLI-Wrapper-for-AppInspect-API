@@ -35,8 +35,10 @@ export SPLUNK_REPORT_TIMEOUT=<int_value>
 ## Additional Notes
 Currently, the CLI color output does not work in a Windows environment.
 
-If you get a message about a missing DLL on Windows, you will need to install the Visual Studio redistributable
-package found here: https://www.microsoft.com/en-us/download/details.aspx?id=52685
+If you get a message about a missing DLL on Windows, you will need to install the Visual Studio redistributable package found here: https://www.microsoft.com/en-us/download/details.aspx?id=52685
+
+## Quirks / Bugs / Gotchas
+When using `--included_tags` ensure that you use `=` and not a space. So `--included_tags=cloud,jquery` will work, but `--included_tags cloud,jquery` will not.
 
 ## Options
 ```
@@ -55,9 +57,7 @@ OPTIONS:
             By default this will generat an HTML file. If set to false then the report will be generated as JSON. Only
             applicable is 'generate_file' flag is set to true.
     -t, --included_tags <included_tags>...
-            Multiple tags allowed i.e. -t=foo,bar etc. All tags provided here
-            https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference/ can now be passed in as
-            options i.e. -t=cloud,jquery.
+            Multiple tags allowed i.e. --included_tags=foo,bar etc. All tags provided here https://dev.splunk.com/enterprise/reference/appinspect/appinspecttagreference/.
     -p, --password <SPLUNK_PASSWORD>
             Provide your splunk.com / SplunkAnswers / Splunkbase password. Can also be set as an env var
             SPLUNK_PASSWORD.
@@ -82,7 +82,7 @@ Optionally, if you store your SPLUNK_PASSWORD, SPLUNK_USERNAME, and REPORT_PATH 
 v 0.2.1
 - Clap updated to v4.0.18
     - Note: Tags must be provided as a comma delimited list:
-         `-t=<tag1>,<tagN>`
+         `-t=<tag1>,<tagN> or --included_tags=<tag1>,<tagN>`
 - Reqwest update to v0.11
 - Added `private_victoria` and `private_classic` tags
 

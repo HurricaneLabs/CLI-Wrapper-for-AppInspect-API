@@ -85,7 +85,7 @@ fn submit_app(
     let res: serde_json::Value = request_build;
 
     if res["message"]
-        == "File type not allowed.  Files must be [\'gz\', \'tgz\', \'zip\', \'spl\', \'tar\']"
+        == "File type not allowed. Files must be [\'gz\', \'tgz\', \'zip\', \'spl\', \'tar\']"
     {
         return Err(Box::new(CustomError(res["message"].to_string())));
     }
