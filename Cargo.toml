@@ -18,7 +18,7 @@ openssl = { version = "0.10", features = ["vendored"] }
 serde_json = "1.0.55"
 clap = "3.1.12"
 dirs = "4.0.0"
-html2text = "0.4.2"
+html2text = "0.5.0"
 anyhow = "1.0.38"
 termcolor = "1.1"
 log = "0.4.14"
