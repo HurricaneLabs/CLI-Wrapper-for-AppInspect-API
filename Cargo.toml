@@ -17,7 +17,7 @@ serde = { version = "1.0.55", features = ["derive"] }
 openssl = { version = "0.10", features = ["vendored"] }
 serde_json = "1.0.55"
 clap = "3.1.12"
-dirs = "4.0.0"
+dirs = "5.0.0"
 html2text = "0.4.2"
 anyhow = "1.0.38"
 termcolor = "1.1"
